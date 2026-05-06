@@ -2,40 +2,22 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Speedrun CAPTCHA Game</title>
+<title>Speedrun Game</title>
 
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body {
-  font-family: Arial;
-  text-align: center;
-  background: #111;
-  color: white;
-}
-
-input, button {
-  padding: 10px;
-  margin: 5px;
-}
-
-table {
-  margin: auto;
-  border-collapse: collapse;
-  width: 60%;
-}
-
-td, th {
-  border: 1px solid #555;
-  padding: 8px;
-}
+body { font-family: Arial; text-align:center; background:#111; color:white; }
+input, button { padding:10px; margin:5px; }
+table { margin:auto; border-collapse:collapse; width:60%; }
+td, th { border:1px solid #555; padding:8px; }
 </style>
 </head>
 
 <body>
 
-<h2>👤 LOGIN / REGISTER</h2>
+<h2>LOGIN</h2>
 
 <input id="email" placeholder="email">
 <input id="pass" type="password" placeholder="hasło">
@@ -49,19 +31,17 @@ td, th {
 
 <hr>
 
-<h2>⛏ SPEEDRUN + CAPTCHA</h2>
-
-<button onclick="startRun()">START RUN</button>
+<h2>SPEEDRUN</h2>
+<button onclick="startRun()">START</button>
 <p id="timer">--</p>
 
-<!-- CAPTCHA -->
 <div class="g-recaptcha"
      data-sitekey="6LdTLNwsAAAAABG_UcqlqLwmjb7AsQBt-360BHmo"
      data-callback="captchaDone"></div>
 
 <hr>
 
-<h2>🏁 LEADERBOARD</h2>
+<h2>LEADERBOARD</h2>
 
 <table>
 <tr><th>User</th><th>Time</th></tr>
@@ -70,7 +50,7 @@ td, th {
 
 <script>
 
-// 🔥 SUPABASE
+// SUPABASE
 const supabaseClient = supabase.createClient(
   "https://nyqnoripxurxzvqdscvk.supabase.co",
   "sb_publishable_WgF6awCarvzBPcFAmIohgg_uOGaGvSh"
@@ -88,7 +68,7 @@ async function register() {
   });
 
   if (error) return alert(error.message);
-  alert("Zarejestrowano!");
+  alert("OK");
 }
 
 // LOGIN
@@ -104,13 +84,12 @@ async function login() {
   status.innerText = "Zalogowany: " + user.email;
 }
 
-// START RUN
+// START
 function startRun() {
   if (!user) return alert("Zaloguj się!");
 
   running = true;
   startTime = Date.now();
-
   timer.innerText = "Rozwiąż CAPTCHA!";
 }
 
@@ -147,107 +126,6 @@ async function loadBoard() {
 
 loadBoard();
 
-</script>
-
-</body>
-</html>
-  user = data.user;
-  status.innerText = "Zalogowany: " + user.email;
-}
-
-// START RUN
-function startRun() {
-  if (!user) return alert("Zaloguj się!");
-
-  running = true;
-  startTime = Date.now();
-
-  timer.innerText = "Rozwiąż CAPTCHA!";
-}
-
-// CAPTCHA DONE
-async function captchaDone() {
-  if (!running) return;
-
-  let time = ((Date.now() - startTime) / 1000).toFixed(2);
-
-  timer.innerText = "Twój czas: " + time + "s";
-
-  await supabaseClient.from("scores").insert([
-    {
-      user: user.email,
-      time: parseFloat(time)
-    }
-  ]);
-
-  running = false;
-
-  loadBoard();
-}
-
-// LEADERBOARD
-async function loadBoard() {
-  let { data } = await supabaseClient
-    .from("scores")
-    .select("*")
-    .order("time", { ascending: true });
-
-  if (!data) return;
-
-  board.innerHTML = data.map(d =>
-    `<tr><td>${d.user}</td><td>${d.time}</td></tr>`
-  ).join("");
-}
-
-loadBoard();
-</script>
-
-</body>
-</html>
-  if (error) return alert(error.message);
-
-  user = data.user;
-  status.innerText = "Zalogowany: " + user.email;
-}
-
-// START RUN
-function startRun() {
-  if (!user) return alert("Zaloguj się!");
-
-  startTime = Date.now();
-  timer.innerText = "RUN STARTED...";
-
-  setTimeout(finishRun, 1000);
-}
-
-// FINISH RUN
-async function finishRun() {
-  let time = ((Date.now() - startTime) / 1000).toFixed(2);
-
-  timer.innerText = "Twój czas: " + time + "s";
-
-  await supabaseClient.from("scores").insert([
-    { user: user.email, time: parseFloat(time) }
-  ]);
-
-  loadBoard();
-}
-
-// LOAD LEADERBOARD
-async function loadBoard() {
-  let { data } = await supabaseClient
-    .from("scores")
-    .select("*")
-    .order("time", { ascending: true });
-
-  if (!data) return;
-
-  board.innerHTML = data.map(d =>
-    `<tr><td>${d.user}</td><td>${d.time}</td></tr>`
-  ).join("");
-}
-
-loadBoard();
 </script>
 
 </body>
