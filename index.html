@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Speedrun Auth Core</title>
+<title>Speedrun Game</title>
 <style>
 body { font-family: Arial; text-align:center; background:#111; color:white; }
 input, button { padding:10px; margin:5px; }
@@ -13,14 +13,14 @@ button { cursor:pointer; }
 </head>
 <body>
 
-<h2>👤 REJESTRACJA</h2>
-<input id="regEmail" placeholder="email">
-<input id="regPass" placeholder="hasło">
-<button onclick="register()">Register</button>
+<h2>👤 LOGIN / REGISTER</h2>
 
-<h2>🔐 LOGIN</h2>
-<input id="logEmail" placeholder="email">
-<input id="logPass" placeholder="hasło">
+<input id="email" placeholder="email">
+<input id="pass" type="password" placeholder="hasło">
+
+<br>
+
+<button onclick="register()">Register</button>
 <button onclick="login()">Login</button>
 
 <h3 id="status">Nie zalogowano</h3>
@@ -35,114 +35,198 @@ button { cursor:pointer; }
 
 <h2>🏁 LEADERBOARD</h2>
 <table>
-<thead>
 <tr><th>User</th><th>Time</th></tr>
-</thead>
 <tbody id="board"></tbody>
 </table>
 
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDWSZtVOHfZ7krDs8zI2vpJq3hUjAtNG2o",
-  authDomain: "rechapra-15f8d.firebaseapp.com",
-  databaseURL: "https://rechapra-15f8d-default-rtdb.firebaseio.com",
-  projectId: "rechapra-15f8d",
-  storageBucket: "rechapra-15f8d.appspot.com",
-  messagingSenderId: "614103898647",
-  appId: "1:614103898647:web:ba1fe6f3bb4896d12e5a52"
-};
+// 🔥 TU WKLEJ TYLKO anon/public KEY (NIE secret!)
+const supabaseClient = supabase.createClient(
+  "TWOJ_SUPABASE_URL",
+  "TWOJ_ANON_PUBLIC_KEY"
+);
 
-firebase.initializeApp(firebaseConfig);
-
-const auth = firebase.auth();
-const db = firebase.database();
-
+let user = null;
 let startTime;
 
 // REGISTER
-function register() {
-  let email = regEmail.value;
-  let pass = regPass.value;
+async function register() {
+  const { error } = await supabaseClient.auth.signUp({
+    email: email.value,
+    password: pass.value
+  });
 
-  auth.createUserWithEmailAndPassword(email, pass)
-    .then(() => alert("Zarejestrowano"))
-    .catch(e => alert(e.message));
+  if (error) return alert(error.message);
+  alert("Zarejestrowano!");
 }
 
 // LOGIN
-function login() {
-  let email = logEmail.value;
-  let pass = logPass.value;
+async function login() {
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email: email.value,
+    password: pass.value
+  });
 
-  auth.signInWithEmailAndPassword(email, pass)
-    .then(user => {
-      document.getElementById("status").innerText =
-        "Zalogowany: " + user.user.email;
-    })
-    .catch(e => alert(e.message));
+  if (error) return alert(error.message);
+
+  user = data.user;
+  status.innerText = "Zalogowany: " + user.email;
 }
 
-// SPEEDRUN START
+// START RUN
 function startRun() {
-  if (!auth.currentUser) return alert("Zaloguj się!");
+  if (!user) return alert("Zaloguj się!");
 
   startTime = Date.now();
-  document.getElementById("timer").innerText = "RUN STARTED...";
+  timer.innerText = "RUN STARTED...";
 
   setTimeout(finishRun, 1000);
 }
 
-// FINISH
-function finishRun() {
+// FINISH RUN
+async function finishRun() {
   let time = ((Date.now() - startTime) / 1000).toFixed(2);
-  document.getElementById("timer").innerText = "Twój czas: " + time + "s";
 
-  saveScore(auth.currentUser.email, time);
+  timer.innerText = "Twój czas: " + time + "s";
+
+  await supabaseClient.from("scores").insert([
+    { user: user.email, time: parseFloat(time) }
+  ]);
+
+  loadBoard();
 }
 
-// SAVE
-function saveScore(user, time) {
-  db.ref("scores").push({
-    user: user,
-    time: parseFloat(time)
-  });
+// LEADERBOARD
+async function loadBoard() {
+  let { data } = await supabaseClient
+    .from("scores")
+    .select("*")
+    .order("time", { ascending: true });
+
+  board.innerHTML = data.map(d =>
+    `<tr><td>${d.user}</td><td>${d.time}</td></tr>`
+  ).join("");
 }
 
-// LOAD LEADERBOARD
-db.ref("scores").on("value", snap => {
-  let data = snap.val();
-  let html = [];
-
-  if (data) {
-    Object.values(data)
-      .sort((a,b) => a.time - b.time)
-      .forEach(d => {
-        html.push(`<tr><td>${d.user}</td><td>${d.time}</td></tr>`);
-      });
-  }
-
-  board.innerHTML = html.join("");
-});
+loadBoard();
 </script>
 
 </body>
-</html>  let html = [];
+</html><!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Speedrun Game</title>
+<style>
+body { font-family: Arial; text-align:center; background:#111; color:white; }
+input, button { padding:10px; margin:5px; }
+table { margin:auto; border-collapse:collapse; width:60%; }
+td, th { border:1px solid #555; padding:8px; }
+button { cursor:pointer; }
+</style>
+</head>
+<body>
 
-  if (data) {
-    Object.values(data)
-      .sort((a,b) => a.time - b.time)
-      .forEach(d => {
-        html.push(`<tr><td>${d.user}</td><td>${d.time}</td></tr>`);
-      });
-  }
+<h2>👤 LOGIN / REGISTER</h2>
 
-  document.getElementById("board").innerHTML = html.join("");
-});
+<input id="email" placeholder="email">
+<input id="pass" type="password" placeholder="hasło">
+
+<br>
+
+<button onclick="register()">Register</button>
+<button onclick="login()">Login</button>
+
+<h3 id="status">Nie zalogowano</h3>
+
+<hr>
+
+<h2>⛏ SPEEDRUN</h2>
+<button onclick="startRun()">START</button>
+<p id="timer">--</p>
+
+<hr>
+
+<h2>🏁 LEADERBOARD</h2>
+<table>
+<tr><th>User</th><th>Time</th></tr>
+<tbody id="board"></tbody>
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// 🔥 TU WKLEJ TYLKO anon/public KEY (NIE secret!)
+const supabaseClient = supabase.createClient(
+  "TWOJ_SUPABASE_URL",
+  "TWOJ_ANON_PUBLIC_KEY"
+);
+
+let user = null;
+let startTime;
+
+// REGISTER
+async function register() {
+  const { error } = await supabaseClient.auth.signUp({
+    email: email.value,
+    password: pass.value
+  });
+
+  if (error) return alert(error.message);
+  alert("Zarejestrowano!");
+}
+
+// LOGIN
+async function login() {
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email: email.value,
+    password: pass.value
+  });
+
+  if (error) return alert(error.message);
+
+  user = data.user;
+  status.innerText = "Zalogowany: " + user.email;
+}
+
+// START RUN
+function startRun() {
+  if (!user) return alert("Zaloguj się!");
+
+  startTime = Date.now();
+  timer.innerText = "RUN STARTED...";
+
+  setTimeout(finishRun, 1000);
+}
+
+// FINISH RUN
+async function finishRun() {
+  let time = ((Date.now() - startTime) / 1000).toFixed(2);
+
+  timer.innerText = "Twój czas: " + time + "s";
+
+  await supabaseClient.from("scores").insert([
+    { user: user.email, time: parseFloat(time) }
+  ]);
+
+  loadBoard();
+}
+
+// LEADERBOARD
+async function loadBoard() {
+  let { data } = await supabaseClient
+    .from("scores")
+    .select("*")
+    .order("time", { ascending: true });
+
+  board.innerHTML = data.map(d =>
+    `<tr><td>${d.user}</td><td>${d.time}</td></tr>`
+  ).join("");
+}
+
+loadBoard();
 </script>
 
 </body>
