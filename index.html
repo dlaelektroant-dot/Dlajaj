@@ -1,3 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Speedrun Core</title>
+  <style>
+    body { font-family: Arial; text-align:center; background:#111; color:#fff; }
+    input, button { padding:10px; margin:5px; }
+    table { margin:auto; border-collapse: collapse; width:60%; background:#222; }
+    td, th { border:1px solid #555; padding:8px; }
+    button { cursor:pointer; }
+  </style>
+</head>
+<body>
+
+<h2>👤 LOGIN</h2>
+<input id="user" placeholder="login">
+<button onclick="login()">Zaloguj</button>
+
+<h3 id="status">Nie zalogowano</h3>
+
+<hr>
+
+<h2>⛏ SPEEDRUN</h2>
+<button onclick="startRun()">START RUN</button>
+<p id="timer">--</p>
+
+<hr>
+
+<h2>🏁 GLOBAL LEADERBOARD</h2>
+<table>
+  <thead>
+    <tr>
+      <th>User</th>
+      <th>Time (s)</th>
+    </tr>
+  </thead>
+  <tbody id="board"></tbody>
+</table>
+
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
@@ -14,4 +55,63 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+
+let currentUser = null;
+let startTime;
+
+// LOGIN
+function login() {
+  const u = document.getElementById("user").value;
+  if (!u) return alert("Wpisz login");
+
+  currentUser = u;
+  document.getElementById("status").innerText = "Zalogowany: " + u;
+}
+
+// SPEEDRUN START
+function startRun() {
+  if (!currentUser) return alert("Zaloguj się!");
+
+  startTime = Date.now();
+  document.getElementById("timer").innerText = "RUN STARTED...";
+
+  // symulacja CAPTCHY / challenge
+  setTimeout(finishRun, 1000);
+}
+
+// END RUN
+function finishRun() {
+  let time = ((Date.now() - startTime) / 1000).toFixed(2);
+
+  document.getElementById("timer").innerText = "Twój czas: " + time + "s";
+
+  saveScore(currentUser, time);
+}
+
+// SAVE TO FIREBASE
+function saveScore(user, time) {
+  db.ref("scores").push({
+    user: user,
+    time: parseFloat(time)
+  });
+}
+
+// LOAD LEADERBOARD
+db.ref("scores").on("value", (snap) => {
+  let data = snap.val();
+  let html = [];
+
+  if (data) {
+    Object.values(data)
+      .sort((a,b) => a.time - b.time)
+      .forEach(d => {
+        html.push(`<tr><td>${d.user}</td><td>${d.time}</td></tr>`);
+      });
+  }
+
+  document.getElementById("board").innerHTML = html.join("");
+});
 </script>
+
+</body>
+</html>
