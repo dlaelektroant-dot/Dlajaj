@@ -4,7 +4,10 @@
 <meta charset="UTF-8">
 <title>Captcha Speedrun</title>
 
+<!-- reCAPTCHA -->
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+<!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -51,8 +54,9 @@ td, th {
 <button onclick="startRun()">START</button>
 <p id="timer">--</p>
 
+<!-- TWOJA CAPTCHA -->
 <div class="g-recaptcha"
-     data-sitekey="6LfPL9wsAAAAAGPzdev5LV-m3Q6OQPqcH_mQyqlM"
+     data-sitekey="6Le3MtwsAAAAAKj0M63h4rPWl93_5NLx_O4LBQZQ"
      data-callback="captchaDone"></div>
 
 <hr>
@@ -66,7 +70,7 @@ td, th {
 
 <script>
 
-// SUPABASE
+// 🔥 SUPABASE (twoje dane)
 const supabaseClient = supabase.createClient(
   "https://nyqnoripxurxzvqdscvk.supabase.co",
   "sb_publishable_WgF6awCarvzBPcFAmIohgg_uOGaGvSh"
@@ -84,7 +88,7 @@ async function register() {
   });
 
   if (error) alert(error.message);
-  else alert("OK");
+  else alert("Zarejestrowano");
 }
 
 // LOGIN
@@ -102,7 +106,7 @@ async function login() {
 
 // START
 function startRun() {
-  if (!user) return alert("Zaloguj się");
+  if (!user) return alert("Zaloguj się!");
 
   startTime = Date.now();
   running = true;
