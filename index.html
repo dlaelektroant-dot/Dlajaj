@@ -2,7 +2,10 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Speedrun Game</title>
+<title>Speedrun Captcha Game</title>
+
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 body {
@@ -27,10 +30,6 @@ td, th {
   border: 1px solid #555;
   padding: 8px;
 }
-
-button {
-  cursor: pointer;
-}
 </style>
 </head>
 
@@ -50,23 +49,28 @@ button {
 
 <hr>
 
-<h2>⛏ SPEEDRUN</h2>
-<button onclick="startRun()">START</button>
+<h2>⛏ SPEEDRUN CAPTCHA</h2>
+
+<button onclick="startRun()">START RUN</button>
 
 <p id="timer">--</p>
+
+<!-- CAPTCHA (TU WPISZ SWÓJ SITE KEY Z GOOGLE) -->
+<div class="g-recaptcha"
+     data-sitekey="TWOJ_SITE_KEY"
+     data-callback="captchaDone"></div>
 
 <hr>
 
 <h2>🏁 LEADERBOARD</h2>
+
 <table>
 <tr><th>User</th><th>Time</th></tr>
 <tbody id="board"></tbody>
 </table>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
-// 🔥 TWOJE SUPABASE DANE
+// 🔥 SUPABASE (już podłączone)
 const supabaseClient = supabase.createClient(
   "https://nyqnoripxurxzvqdscvk.supabase.co",
   "sb_publishable_WgF6awCarvzBPcFAmIohgg_uOGaGvSh"
@@ -74,6 +78,7 @@ const supabaseClient = supabase.createClient(
 
 let user = null;
 let startTime;
+let running = false;
 
 // REGISTER
 async function register() {
@@ -83,7 +88,6 @@ async function register() {
   });
 
   if (error) return alert(error.message);
-
   alert("Zarejestrowano!");
 }
 
@@ -94,6 +98,61 @@ async function login() {
     password: pass.value
   });
 
+  if (error) return alert(error.message);
+
+  user = data.user;
+  status.innerText = "Zalogowany: " + user.email;
+}
+
+// START RUN
+function startRun() {
+  if (!user) return alert("Zaloguj się!");
+
+  running = true;
+  startTime = Date.now();
+
+  timer.innerText = "Rozwiąż CAPTCHA!";
+}
+
+// CAPTCHA DONE
+async function captchaDone() {
+  if (!running) return;
+
+  let time = ((Date.now() - startTime) / 1000).toFixed(2);
+
+  timer.innerText = "Twój czas: " + time + "s";
+
+  await supabaseClient.from("scores").insert([
+    {
+      user: user.email,
+      time: parseFloat(time)
+    }
+  ]);
+
+  running = false;
+
+  loadBoard();
+}
+
+// LEADERBOARD
+async function loadBoard() {
+  let { data } = await supabaseClient
+    .from("scores")
+    .select("*")
+    .order("time", { ascending: true });
+
+  if (!data) return;
+
+  board.innerHTML = data.map(d =>
+    `<tr><td>${d.user}</td><td>${d.time}</td></tr>`
+  ).join("");
+}
+
+loadBoard();
+</script>
+
+</body>
+</html>
   if (error) return alert(error.message);
 
   user = data.user;
