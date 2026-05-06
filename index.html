@@ -1,33 +1,41 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-  <meta charset="UTF-8">
-  <title>Start strony</title>
-  <style>
-    body {
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    iframe {
-      width: 350px;
-      height: 500px;
-      border: none;
-    }
-  </style>
-</head>
-<body>
-  <section>
-<h1 style="font-size: 60px; text-align: center;">
-Dlajaj.pl
-</h1>
-  </section>
-  <iframe src="https://demo.fireprobe.net/"></iframe>
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-<img src="https://source.unsplash.com/random/100x100" alt="losowy obrazek">
-<div class="g-recaptcha" data-sitekey="6Ld31dssAAAAAAneHkIQHYYjJ3toV7QCQ5nHamMr"></div>
-  <img src="https://picsum.photos/100x100?random=1" alt="losowy obrazek">
-</body>
-</html>
+
+<form id="form">
+  <input type="text" placeholder="Login"><br><br>
+
+  <div class="g-recaptcha" data-sitekey="TWÓJ_SITE_KEY"></div>
+
+  <p id="timer">Czas: 10s</p>
+
+  <button type="submit">Wyślij</button>
+</form>
+
+<script>
+let timeLeft = 10;
+let timerEl = document.getElementById("timer");
+let form = document.getElementById("form");
+
+let interval = setInterval(() => {
+  timeLeft--;
+  timerEl.innerText = "Czas: " + timeLeft + "s";
+
+  if (timeLeft <= 0) {
+    clearInterval(interval);
+
+    // reset CAPTCHA
+    grecaptcha.reset();
+
+    alert("Za wolno 😄 spróbuj jeszcze raz");
+    timeLeft = 10;
+  }
+}, 1000);
+
+form.onsubmit = function(e) {
+  let response = grecaptcha.getResponse();
+
+  if (response.length === 0) {
+    e.preventDefault();
+    alert("Zrób CAPTCHA");
+  }
+};
+</script>
