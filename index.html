@@ -2,10 +2,9 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Speedrun CAPTCHA Game</title>
+<title>Speedrun Local Game</title>
 
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 body {
@@ -34,33 +33,28 @@ td, th {
 
 <body>
 
-<h2>LOGIN / REGISTER</h2>
+<h2>LOGIN (LOCAL)</h2>
 
-<input id="email" placeholder="email"><br>
-<input id="pass" type="password" placeholder="hasło"><br>
-
-<button onclick="register()">Register</button>
+<input id="email" placeholder="nick/email"><br>
 <button onclick="login()">Login</button>
 
-<p id="status">Ładowanie...</p>
+<p id="status">Nie zalogowano</p>
 
 <hr>
 
-<h2>CAPTCHA SPEEDRUN</h2>
+<h2>SPEEDRUN</h2>
 
 <button onclick="startRun()">START</button>
 
 <p id="timer">--</p>
 
-<div id="captchaBox">
-  <div class="g-recaptcha"
-       data-sitekey="6Le3MtwsAAAAAKj0M63h4rPWl93_5NLx_O4LBQZQ"
-       data-callback="captchaDone"></div>
-</div>
+<div class="g-recaptcha"
+     data-sitekey="6Le3MtwsAAAAAKj0M63h4rPWl93_5NLx_O4LBQZQ"
+     data-callback="captchaDone"></div>
 
 <hr>
 
-<h2>🏆 TOP 10</h2>
+<h2>🏆 TOP 10 (LOCAL)</h2>
 
 <table>
 <tr><th>#</th><th>User</th><th>Time</th></tr>
@@ -69,57 +63,44 @@ td, th {
 
 <script>
 
-// 🔥 SUPABASE
-const supabaseClient = supabase.createClient(
-  "https://nyqnoripxurxzvqdscvk.supabase.co",
-  "sb_publishable_WgF6awCarvzBPcFAmIohgg_uOGaGvSh"
-);
-
-let user = null;
+let user = localStorage.getItem("user");
 let startTime = 0;
 let running = false;
 
-// AUTO LOGIN
-async function checkSession() {
-  const { data } = await supabaseClient.auth.getSession();
+// BAN SYSTEM
+function isBanned() {
+  let banUntil = localStorage.getItem("ban");
+  if (!banUntil) return false;
 
-  if (data.session) {
-    user = data.session.user;
-    status.innerText = "Zalogowany: " + user.email;
-  } else {
-    status.innerText = "Nie zalogowano";
-  }
+  return Date.now() < parseInt(banUntil);
 }
 
-checkSession();
-
-// REGISTER
-async function register() {
-  let { error } = await supabaseClient.auth.signUp({
-    email: email.value,
-    password: pass.value
-  });
-
-  if (error) alert(error.message);
-  else alert("Zarejestrowano");
+function setBan(minutes) {
+  let until = Date.now() + minutes * 60 * 1000;
+  localStorage.setItem("ban", until);
 }
 
 // LOGIN
-async function login() {
-  let { data, error } = await supabaseClient.auth.signInWithPassword({
-    email: email.value,
-    password: pass.value
-  });
+function login() {
+  user = email.value;
 
-  if (error) return alert(error.message);
+  if (isBanned()) {
+    status.innerText = "❌ ZBANOWANY";
+    return;
+  }
 
-  user = data.user;
-  status.innerText = "Zalogowany: " + user.email;
+  localStorage.setItem("user", user);
+  status.innerText = "Zalogowany: " + user;
 }
 
-// START RUN
+// START
 function startRun() {
   if (!user) return alert("Zaloguj się!");
+
+  if (isBanned()) {
+    alert("Jesteś zbanowany!");
+    return;
+  }
 
   startTime = Date.now();
   running = true;
@@ -127,46 +108,56 @@ function startRun() {
   timer.innerText = "Rozwiąż CAPTCHA!";
 }
 
-// CAPTCHA DONE
-async function captchaDone() {
+// CAPTCHA DONE + ANTI CHEAT
+function captchaDone() {
   if (!running) return;
 
-  let time = ((Date.now() - startTime)/1000).toFixed(2);
+  let time = (Date.now() - startTime) / 1000;
 
-  timer.innerText = "Twój czas: " + time + "s";
+  // 🚨 ANTI CHEAT
+  if (time < 0.5) {
+    setBan(5);
+    alert("BAN 5 MIN (<0.5s)");
+    return;
+  }
 
-  await supabaseClient.from("scores").insert([
-    {
-      user: user.email,
-      time: parseFloat(time)
-    }
-  ]);
+  if (time >= 0.5 && time <= 2) {
+    setBan(3);
+    alert("BAN 3 MIN (podejrzany czas)");
+    return;
+  }
+
+  // SAVE SCORE
+  let scores = JSON.parse(localStorage.getItem("scores") || "[]");
+
+  scores.push({
+    user,
+    time: time.toFixed(2)
+  });
+
+  localStorage.setItem("scores", JSON.stringify(scores));
 
   running = false;
 
   loadBoard();
 }
 
-// 🏆 TOP 10 LEADERBOARD
-async function loadBoard() {
-  let { data } = await supabaseClient
-    .from("scores")
-    .select("*")
-    .order("time", { ascending: true })
-    .limit(10);
+// TOP 10
+function loadBoard() {
+  let scores = JSON.parse(localStorage.getItem("scores") || "[]");
 
-  if (!data) return;
+  scores.sort((a,b) => a.time - b.time);
 
-  board.innerHTML = data.map((d, i) =>
-    `<tr>
-      <td>#${i + 1}</td>
-      <td>${d.user}</td>
-      <td>${d.time}s</td>
-    </tr>`
+  scores = scores.slice(0,10);
+
+  board.innerHTML = scores.map((s,i) =>
+    `<tr><td>#${i+1}</td><td>${s.user}</td><td>${s.time}s</td></tr>`
   ).join("");
 }
 
 loadBoard();
+
+if (user) status.innerText = "Zalogowany: " + user;
 
 </script>
 
