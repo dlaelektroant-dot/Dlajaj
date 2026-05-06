@@ -1,52 +1,17 @@
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
-
-<h2>🔥 reCAPTCHA SPEEDRUN</h2>
-
-<button id="startBtn">START RUN</button>
-
-<p id="timer">Kliknij START</p>
-
-<div id="captcha" style="display:none; margin-top:20px;">
-  <div class="g-recaptcha"
-       data-sitekey="6Ld31dssAAAAAAneHkIQHYYjJ3toV7QCQ5nHamMr"
-       data-callback="onSolved"></div>
-</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <script>
-let startTime;
-let running = false;
-
-const timer = document.getElementById("timer");
-const startBtn = document.getElementById("startBtn");
-const captcha = document.getElementById("captcha");
-
-startBtn.onclick = () => {
-  captcha.style.display = "block";
-
-  startTime = Date.now();
-  running = true;
-
-  timer.innerText = "⏱ RUN STARTED... solve CAPTCHA!";
+const firebaseConfig = {
+  apiKey: "AIzaSyDWSZtVOHfZ7krDs8zI2vpJq3hUjAtNG2o",
+  authDomain: "rechapra-15f8d.firebaseapp.com",
+  databaseURL: "https://rechapra-15f8d-default-rtdb.firebaseio.com",
+  projectId: "rechapra-15f8d",
+  storageBucket: "rechapra-15f8d.appspot.com",
+  messagingSenderId: "614103898647",
+  appId: "1:614103898647:web:ba1fe6f3bb4896d12e5a52"
 };
 
-function onSolved() {
-  if (!running) return;
-
-  let time = ((Date.now() - startTime) / 1000).toFixed(2);
-
-  timer.innerText = "🔥 Twój czas: " + time + "s";
-
-  running = false;
-}
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 </script>
-<button id="resetBtn" style="margin-top:30px;">🔄 RESET RUN</button>
-<script>
-document.getElementById("resetBtn").onclick = () => {
-  location.reload();
-};
-</script>
-<a href="https://www.tiktok.com/@elektroantek" target="_blank">
-  <button style="padding:10px 20px; font-size:16px; cursor:pointer;">
-    TikTok elektroantek (właściciel strony)
-  </button>
-</a>
