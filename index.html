@@ -1,45 +1,49 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Speedrun Core</title>
-  <style>
-    body { font-family: Arial; text-align:center; background:#111; color:#fff; }
-    input, button { padding:10px; margin:5px; }
-    table { margin:auto; border-collapse: collapse; width:60%; background:#222; }
-    td, th { border:1px solid #555; padding:8px; }
-    button { cursor:pointer; }
-  </style>
+<meta charset="UTF-8">
+<title>Speedrun Auth Core</title>
+<style>
+body { font-family: Arial; text-align:center; background:#111; color:white; }
+input, button { padding:10px; margin:5px; }
+table { margin:auto; border-collapse:collapse; width:60%; }
+td, th { border:1px solid #555; padding:8px; }
+button { cursor:pointer; }
+</style>
 </head>
 <body>
 
-<h2>👤 LOGIN</h2>
-<input id="user" placeholder="login">
-<button onclick="login()">Zaloguj</button>
+<h2>👤 REJESTRACJA</h2>
+<input id="regEmail" placeholder="email">
+<input id="regPass" placeholder="hasło">
+<button onclick="register()">Register</button>
+
+<h2>🔐 LOGIN</h2>
+<input id="logEmail" placeholder="email">
+<input id="logPass" placeholder="hasło">
+<button onclick="login()">Login</button>
 
 <h3 id="status">Nie zalogowano</h3>
 
 <hr>
 
 <h2>⛏ SPEEDRUN</h2>
-<button onclick="startRun()">START RUN</button>
+<button onclick="startRun()">START</button>
 <p id="timer">--</p>
 
 <hr>
 
-<h2>🏁 GLOBAL LEADERBOARD</h2>
+<h2>🏁 LEADERBOARD</h2>
 <table>
-  <thead>
-    <tr>
-      <th>User</th>
-      <th>Time (s)</th>
-    </tr>
-  </thead>
-  <tbody id="board"></tbody>
+<thead>
+<tr><th>User</th><th>Time</th></tr>
+</thead>
+<tbody id="board"></tbody>
 </table>
 
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <script>
@@ -54,41 +58,54 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
 const db = firebase.database();
 
-let currentUser = null;
 let startTime;
+
+// REGISTER
+function register() {
+  let email = regEmail.value;
+  let pass = regPass.value;
+
+  auth.createUserWithEmailAndPassword(email, pass)
+    .then(() => alert("Zarejestrowano"))
+    .catch(e => alert(e.message));
+}
 
 // LOGIN
 function login() {
-  const u = document.getElementById("user").value;
-  if (!u) return alert("Wpisz login");
+  let email = logEmail.value;
+  let pass = logPass.value;
 
-  currentUser = u;
-  document.getElementById("status").innerText = "Zalogowany: " + u;
+  auth.signInWithEmailAndPassword(email, pass)
+    .then(user => {
+      document.getElementById("status").innerText =
+        "Zalogowany: " + user.user.email;
+    })
+    .catch(e => alert(e.message));
 }
 
 // SPEEDRUN START
 function startRun() {
-  if (!currentUser) return alert("Zaloguj się!");
+  if (!auth.currentUser) return alert("Zaloguj się!");
 
   startTime = Date.now();
   document.getElementById("timer").innerText = "RUN STARTED...";
 
-  // symulacja CAPTCHY / challenge
   setTimeout(finishRun, 1000);
 }
 
-// END RUN
+// FINISH
 function finishRun() {
   let time = ((Date.now() - startTime) / 1000).toFixed(2);
-
   document.getElementById("timer").innerText = "Twój czas: " + time + "s";
 
-  saveScore(currentUser, time);
+  saveScore(auth.currentUser.email, time);
 }
 
-// SAVE TO FIREBASE
+// SAVE
 function saveScore(user, time) {
   db.ref("scores").push({
     user: user,
@@ -97,9 +114,24 @@ function saveScore(user, time) {
 }
 
 // LOAD LEADERBOARD
-db.ref("scores").on("value", (snap) => {
+db.ref("scores").on("value", snap => {
   let data = snap.val();
   let html = [];
+
+  if (data) {
+    Object.values(data)
+      .sort((a,b) => a.time - b.time)
+      .forEach(d => {
+        html.push(`<tr><td>${d.user}</td><td>${d.time}</td></tr>`);
+      });
+  }
+
+  board.innerHTML = html.join("");
+});
+</script>
+
+</body>
+</html>  let html = [];
 
   if (data) {
     Object.values(data)
