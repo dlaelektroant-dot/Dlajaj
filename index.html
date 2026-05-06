@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Speedrun Captcha Game</title>
+<title>Speedrun CAPTCHA Game</title>
 
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -49,15 +49,14 @@ td, th {
 
 <hr>
 
-<h2>⛏ SPEEDRUN CAPTCHA</h2>
+<h2>⛏ SPEEDRUN + CAPTCHA</h2>
 
 <button onclick="startRun()">START RUN</button>
-
 <p id="timer">--</p>
 
-<!-- CAPTCHA (TU WPISZ SWÓJ SITE KEY Z GOOGLE) -->
+<!-- CAPTCHA -->
 <div class="g-recaptcha"
-     data-sitekey="TWOJ_SITE_KEY"
+     data-sitekey="6LdTLNwsAAAAABG_UcqlqLwmjb7AsQBt-360BHmo"
      data-callback="captchaDone"></div>
 
 <hr>
@@ -70,7 +69,8 @@ td, th {
 </table>
 
 <script>
-// 🔥 SUPABASE (już podłączone)
+
+// 🔥 SUPABASE
 const supabaseClient = supabase.createClient(
   "https://nyqnoripxurxzvqdscvk.supabase.co",
   "sb_publishable_WgF6awCarvzBPcFAmIohgg_uOGaGvSh"
@@ -100,6 +100,57 @@ async function login() {
 
   if (error) return alert(error.message);
 
+  user = data.user;
+  status.innerText = "Zalogowany: " + user.email;
+}
+
+// START RUN
+function startRun() {
+  if (!user) return alert("Zaloguj się!");
+
+  running = true;
+  startTime = Date.now();
+
+  timer.innerText = "Rozwiąż CAPTCHA!";
+}
+
+// CAPTCHA DONE
+async function captchaDone() {
+  if (!running) return;
+
+  let time = ((Date.now() - startTime) / 1000).toFixed(2);
+
+  timer.innerText = "Twój czas: " + time + "s";
+
+  await supabaseClient.from("scores").insert([
+    { user: user.email, time: parseFloat(time) }
+  ]);
+
+  running = false;
+
+  loadBoard();
+}
+
+// LEADERBOARD
+async function loadBoard() {
+  let { data } = await supabaseClient
+    .from("scores")
+    .select("*")
+    .order("time", { ascending: true });
+
+  if (!data) return;
+
+  board.innerHTML = data.map(d =>
+    `<tr><td>${d.user}</td><td>${d.time}</td></tr>`
+  ).join("");
+}
+
+loadBoard();
+
+</script>
+
+</body>
+</html>
   user = data.user;
   status.innerText = "Zalogowany: " + user.email;
 }
