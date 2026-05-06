@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Speedrun Game</title>
+<title>Speedrun CAPTCHA Game</title>
 
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -20,14 +20,12 @@ input, button {
   margin:5px;
 }
 
-#captchaBox {
-  display:none;
-}
-
 table {
   margin:auto;
+  border-collapse: collapse;
 }
-td,th {
+
+td, th {
   border:1px solid #555;
   padding:8px;
 }
@@ -36,7 +34,7 @@ td,th {
 
 <body>
 
-<h2>LOGIN</h2>
+<h2>LOGIN / REGISTER</h2>
 
 <input id="email" placeholder="email"><br>
 <input id="pass" type="password" placeholder="hasło"><br>
@@ -54,7 +52,6 @@ td,th {
 
 <p id="timer">--</p>
 
-<!-- CAPTCHA UKRYTA NA START -->
 <div id="captchaBox">
   <div class="g-recaptcha"
        data-sitekey="6Le3MtwsAAAAAKj0M63h4rPWl93_5NLx_O4LBQZQ"
@@ -63,15 +60,16 @@ td,th {
 
 <hr>
 
-<h2>LEADERBOARD</h2>
+<h2>🏆 TOP 10</h2>
 
 <table>
-<tr><th>User</th><th>Time</th></tr>
+<tr><th>#</th><th>User</th><th>Time</th></tr>
 <tbody id="board"></tbody>
 </table>
 
 <script>
 
+// 🔥 SUPABASE
 const supabaseClient = supabase.createClient(
   "https://nyqnoripxurxzvqdscvk.supabase.co",
   "sb_publishable_WgF6awCarvzBPcFAmIohgg_uOGaGvSh"
@@ -81,7 +79,7 @@ let user = null;
 let startTime = 0;
 let running = false;
 
-// 🔥 AUTO LOGIN PO REFRESH
+// AUTO LOGIN
 async function checkSession() {
   const { data } = await supabaseClient.auth.getSession();
 
@@ -103,7 +101,7 @@ async function register() {
   });
 
   if (error) alert(error.message);
-  else alert("OK");
+  else alert("Zarejestrowano");
 }
 
 // LOGIN
@@ -119,7 +117,7 @@ async function login() {
   status.innerText = "Zalogowany: " + user.email;
 }
 
-// START = pokaz CAPTCHA
+// START RUN
 function startRun() {
   if (!user) return alert("Zaloguj się!");
 
@@ -127,7 +125,6 @@ function startRun() {
   running = true;
 
   timer.innerText = "Rozwiąż CAPTCHA!";
-  document.getElementById("captchaBox").style.display = "block";
 }
 
 // CAPTCHA DONE
@@ -136,10 +133,13 @@ async function captchaDone() {
 
   let time = ((Date.now() - startTime)/1000).toFixed(2);
 
-  timer.innerText = "Czas: " + time + "s";
+  timer.innerText = "Twój czas: " + time + "s";
 
   await supabaseClient.from("scores").insert([
-    { user: user.email, time: parseFloat(time) }
+    {
+      user: user.email,
+      time: parseFloat(time)
+    }
   ]);
 
   running = false;
@@ -147,17 +147,22 @@ async function captchaDone() {
   loadBoard();
 }
 
-// LEADERBOARD
+// 🏆 TOP 10 LEADERBOARD
 async function loadBoard() {
   let { data } = await supabaseClient
     .from("scores")
     .select("*")
-    .order("time", { ascending: true });
+    .order("time", { ascending: true })
+    .limit(10);
 
   if (!data) return;
 
-  board.innerHTML = data.map(d =>
-    `<tr><td>${d.user}</td><td>${d.time}</td></tr>`
+  board.innerHTML = data.map((d, i) =>
+    `<tr>
+      <td>#${i + 1}</td>
+      <td>${d.user}</td>
+      <td>${d.time}s</td>
+    </tr>`
   ).join("");
 }
 
