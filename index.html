@@ -2,16 +2,33 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Speedrun Game</title>
+<title>Captcha Speedrun</title>
 
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body { font-family: Arial; text-align:center; background:#111; color:white; }
-input, button { padding:10px; margin:5px; }
-table { margin:auto; border-collapse:collapse; width:60%; }
-td, th { border:1px solid #555; padding:8px; }
+body {
+  font-family: Arial;
+  background:#111;
+  color:white;
+  text-align:center;
+}
+
+input, button {
+  padding:10px;
+  margin:5px;
+}
+
+table {
+  margin:auto;
+  border-collapse: collapse;
+}
+
+td, th {
+  border:1px solid #555;
+  padding:8px;
+}
 </style>
 </head>
 
@@ -19,19 +36,18 @@ td, th { border:1px solid #555; padding:8px; }
 
 <h2>LOGIN</h2>
 
-<input id="email" placeholder="email">
-<input id="pass" type="password" placeholder="hasło">
-
-<br>
+<input id="email" placeholder="email"><br>
+<input id="pass" type="password" placeholder="hasło"><br>
 
 <button onclick="register()">Register</button>
 <button onclick="login()">Login</button>
 
-<h3 id="status">Nie zalogowano</h3>
+<p id="status">Nie zalogowano</p>
 
 <hr>
 
-<h2>SPEEDRUN</h2>
+<h2>CAPTCHA SPEEDRUN</h2>
+
 <button onclick="startRun()">START</button>
 <p id="timer">--</p>
 
@@ -57,23 +73,23 @@ const supabaseClient = supabase.createClient(
 );
 
 let user = null;
-let startTime;
+let startTime = 0;
 let running = false;
 
 // REGISTER
 async function register() {
-  const { error } = await supabaseClient.auth.signUp({
+  let { error } = await supabaseClient.auth.signUp({
     email: email.value,
     password: pass.value
   });
 
-  if (error) return alert(error.message);
-  alert("OK");
+  if (error) alert(error.message);
+  else alert("OK");
 }
 
 // LOGIN
 async function login() {
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
+  let { data, error } = await supabaseClient.auth.signInWithPassword({
     email: email.value,
     password: pass.value
   });
@@ -86,10 +102,11 @@ async function login() {
 
 // START
 function startRun() {
-  if (!user) return alert("Zaloguj się!");
+  if (!user) return alert("Zaloguj się");
 
-  running = true;
   startTime = Date.now();
+  running = true;
+
   timer.innerText = "Rozwiąż CAPTCHA!";
 }
 
@@ -97,9 +114,9 @@ function startRun() {
 async function captchaDone() {
   if (!running) return;
 
-  let time = ((Date.now() - startTime) / 1000).toFixed(2);
+  let time = ((Date.now() - startTime)/1000).toFixed(2);
 
-  timer.innerText = "Twój czas: " + time + "s";
+  timer.innerText = "Czas: " + time + "s";
 
   await supabaseClient.from("scores").insert([
     { user: user.email, time: parseFloat(time) }
