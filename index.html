@@ -3,14 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <title>Speedrun Game</title>
+
 <style>
-body { font-family: Arial; text-align:center; background:#111; color:white; }
-input, button { padding:10px; margin:5px; }
-table { margin:auto; border-collapse:collapse; width:60%; }
-td, th { border:1px solid #555; padding:8px; }
-button { cursor:pointer; }
+body {
+  font-family: Arial;
+  text-align: center;
+  background: #111;
+  color: white;
+}
+
+input, button {
+  padding: 10px;
+  margin: 5px;
+}
+
+table {
+  margin: auto;
+  border-collapse: collapse;
+  width: 60%;
+}
+
+td, th {
+  border: 1px solid #555;
+  padding: 8px;
+}
+
+button {
+  cursor: pointer;
+}
 </style>
 </head>
+
 <body>
 
 <h2>👤 LOGIN / REGISTER</h2>
@@ -29,6 +52,7 @@ button { cursor:pointer; }
 
 <h2>⛏ SPEEDRUN</h2>
 <button onclick="startRun()">START</button>
+
 <p id="timer">--</p>
 
 <hr>
@@ -42,10 +66,10 @@ button { cursor:pointer; }
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-// 🔥 TU WKLEJ TYLKO anon/public KEY (NIE secret!)
+// 🔥 TWOJE SUPABASE DANE
 const supabaseClient = supabase.createClient(
-  "TWOJ_SUPABASE_URL",
-  "TWOJ_ANON_PUBLIC_KEY"
+  "https://nyqnoripxurxzvqdscvk.supabase.co",
+  "sb_publishable_WgF6awCarvzBPcFAmIohgg_uOGaGvSh"
 );
 
 let user = null;
@@ -59,6 +83,7 @@ async function register() {
   });
 
   if (error) return alert(error.message);
+
   alert("Zarejestrowano!");
 }
 
@@ -98,12 +123,14 @@ async function finishRun() {
   loadBoard();
 }
 
-// LEADERBOARD
+// LOAD LEADERBOARD
 async function loadBoard() {
   let { data } = await supabaseClient
     .from("scores")
     .select("*")
     .order("time", { ascending: true });
+
+  if (!data) return;
 
   board.innerHTML = data.map(d =>
     `<tr><td>${d.user}</td><td>${d.time}</td></tr>`
