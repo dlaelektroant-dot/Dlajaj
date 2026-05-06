@@ -1,54 +1,41 @@
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
-<h2>🔥 LOGIN TEST</h2>
+<h2>🔥 reCAPTCHA SPEEDRUN</h2>
 
-<form id="form">
-  <div class="g-recaptcha" data-sitekey="TWÓJ_SITE_KEY"></div>
+<button id="startBtn">START RUN</button>
 
-  <button type="submit">Start speedrun</button>
-</form>
+<p id="timer">Kliknij START</p>
 
-<hr>
-
-<h2>⏱ SPEEDRUN CHALLENGE</h2>
-<p id="timer">Kliknij START po CAPTCHA</p>
-
-<button id="startBtn" disabled>START</button>
-<button class="mc" style="display:none;">Klik!</button>
-<button class="mc" style="display:none;">Klik!</button>
-<button class="mc" style="display:none;">Klik!</button>
+<div id="captcha" style="display:none; margin-top:20px;">
+  <div class="g-recaptcha"
+       data-sitekey="6Ld31dssAAAAAAneHkIQHYYjJ3toV7QCQ5nHamMr"
+       data-callback="onSolved"></div>
+</div>
 
 <script>
 let startTime;
+let running = false;
 
-const form = document.getElementById("form");
-const startBtn = document.getElementById("startBtn");
 const timer = document.getElementById("timer");
-const buttons = document.querySelectorAll(".mc");
-
-form.onsubmit = (e) => {
-  e.preventDefault();
-
-  if (grecaptcha.getResponse().length === 0) {
-    alert("Zrób reCAPTCHA");
-    return;
-  }
-
-  startBtn.disabled = false;
-  alert("CAPTCHA zaliczona — odblokowano speedrun 😈");
-};
+const startBtn = document.getElementById("startBtn");
+const captcha = document.getElementById("captcha");
 
 startBtn.onclick = () => {
+  captcha.style.display = "block";
+
   startTime = Date.now();
-  startBtn.disabled = true;
+  running = true;
 
-  buttons.forEach(b => b.style.display = "inline-block");
-
-  buttons.forEach(b => {
-    b.onclick = () => {
-      let time = ((Date.now() - startTime) / 1000).toFixed(2);
-      timer.innerText = "🔥 Twój czas: " + time + "s";
-    };
-  });
+  timer.innerText = "⏱ RUN STARTED... solve CAPTCHA!";
 };
+
+function onSolved() {
+  if (!running) return;
+
+  let time = ((Date.now() - startTime) / 1000).toFixed(2);
+
+  timer.innerText = "🔥 Twój czas: " + time + "s";
+
+  running = false;
+}
 </script>
