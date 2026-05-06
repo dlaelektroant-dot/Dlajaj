@@ -2,12 +2,9 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Captcha Speedrun</title>
+<title>Speedrun Game</title>
 
-<!-- reCAPTCHA -->
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-
-<!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -23,12 +20,14 @@ input, button {
   margin:5px;
 }
 
-table {
-  margin:auto;
-  border-collapse: collapse;
+#captchaBox {
+  display:none;
 }
 
-td, th {
+table {
+  margin:auto;
+}
+td,th {
   border:1px solid #555;
   padding:8px;
 }
@@ -45,19 +44,22 @@ td, th {
 <button onclick="register()">Register</button>
 <button onclick="login()">Login</button>
 
-<p id="status">Nie zalogowano</p>
+<p id="status">Ładowanie...</p>
 
 <hr>
 
 <h2>CAPTCHA SPEEDRUN</h2>
 
 <button onclick="startRun()">START</button>
+
 <p id="timer">--</p>
 
-<!-- TWOJA CAPTCHA -->
-<div class="g-recaptcha"
-     data-sitekey="6Le3MtwsAAAAAKj0M63h4rPWl93_5NLx_O4LBQZQ"
-     data-callback="captchaDone"></div>
+<!-- CAPTCHA UKRYTA NA START -->
+<div id="captchaBox">
+  <div class="g-recaptcha"
+       data-sitekey="6Le3MtwsAAAAAKj0M63h4rPWl93_5NLx_O4LBQZQ"
+       data-callback="captchaDone"></div>
+</div>
 
 <hr>
 
@@ -70,7 +72,6 @@ td, th {
 
 <script>
 
-// 🔥 SUPABASE (twoje dane)
 const supabaseClient = supabase.createClient(
   "https://nyqnoripxurxzvqdscvk.supabase.co",
   "sb_publishable_WgF6awCarvzBPcFAmIohgg_uOGaGvSh"
@@ -80,6 +81,20 @@ let user = null;
 let startTime = 0;
 let running = false;
 
+// 🔥 AUTO LOGIN PO REFRESH
+async function checkSession() {
+  const { data } = await supabaseClient.auth.getSession();
+
+  if (data.session) {
+    user = data.session.user;
+    status.innerText = "Zalogowany: " + user.email;
+  } else {
+    status.innerText = "Nie zalogowano";
+  }
+}
+
+checkSession();
+
 // REGISTER
 async function register() {
   let { error } = await supabaseClient.auth.signUp({
@@ -88,7 +103,7 @@ async function register() {
   });
 
   if (error) alert(error.message);
-  else alert("Zarejestrowano");
+  else alert("OK");
 }
 
 // LOGIN
@@ -104,7 +119,7 @@ async function login() {
   status.innerText = "Zalogowany: " + user.email;
 }
 
-// START
+// START = pokaz CAPTCHA
 function startRun() {
   if (!user) return alert("Zaloguj się!");
 
@@ -112,6 +127,7 @@ function startRun() {
   running = true;
 
   timer.innerText = "Rozwiąż CAPTCHA!";
+  document.getElementById("captchaBox").style.display = "block";
 }
 
 // CAPTCHA DONE
