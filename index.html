@@ -1,41 +1,54 @@
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
-<form id="form">
-  <input type="text" placeholder="Login"><br><br>
+<h2>🔥 LOGIN TEST</h2>
 
+<form id="form">
   <div class="g-recaptcha" data-sitekey="TWÓJ_SITE_KEY"></div>
 
-  <p id="timer">Czas: 10s</p>
-
-  <button type="submit">Wyślij</button>
+  <button type="submit">Start speedrun</button>
 </form>
 
+<hr>
+
+<h2>⏱ SPEEDRUN CHALLENGE</h2>
+<p id="timer">Kliknij START po CAPTCHA</p>
+
+<button id="startBtn" disabled>START</button>
+<button class="mc" style="display:none;">Klik!</button>
+<button class="mc" style="display:none;">Klik!</button>
+<button class="mc" style="display:none;">Klik!</button>
+
 <script>
-let timeLeft = 10;
-let timerEl = document.getElementById("timer");
-let form = document.getElementById("form");
+let startTime;
 
-let interval = setInterval(() => {
-  timeLeft--;
-  timerEl.innerText = "Czas: " + timeLeft + "s";
+const form = document.getElementById("form");
+const startBtn = document.getElementById("startBtn");
+const timer = document.getElementById("timer");
+const buttons = document.querySelectorAll(".mc");
 
-  if (timeLeft <= 0) {
-    clearInterval(interval);
+form.onsubmit = (e) => {
+  e.preventDefault();
 
-    // reset CAPTCHA
-    grecaptcha.reset();
-
-    alert("Za wolno 😄 spróbuj jeszcze raz");
-    timeLeft = 10;
+  if (grecaptcha.getResponse().length === 0) {
+    alert("Zrób reCAPTCHA");
+    return;
   }
-}, 1000);
 
-form.onsubmit = function(e) {
-  let response = grecaptcha.getResponse();
+  startBtn.disabled = false;
+  alert("CAPTCHA zaliczona — odblokowano speedrun 😈");
+};
 
-  if (response.length === 0) {
-    e.preventDefault();
-    alert("Zrób CAPTCHA");
-  }
+startBtn.onclick = () => {
+  startTime = Date.now();
+  startBtn.disabled = true;
+
+  buttons.forEach(b => b.style.display = "inline-block");
+
+  buttons.forEach(b => {
+    b.onclick = () => {
+      let time = ((Date.now() - startTime) / 1000).toFixed(2);
+      timer.innerText = "🔥 Twój czas: " + time + "s";
+    };
+  });
 };
 </script>
